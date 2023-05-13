@@ -171,7 +171,7 @@ class WhatsAppNotification(Document):
                 "message_id": response['messages'][0]['id']
             }).save(ignore_permissions=True)
 
-            frappe.msgprint("WhatsApp Message Triggered", indicator="green", alert=True)
+            frappe.msgprint("WhatsApp Message Sent", indicator="green", alert=True)
 
         except Exception as e:
             response = frappe.flags.integration_request.json()['error']
