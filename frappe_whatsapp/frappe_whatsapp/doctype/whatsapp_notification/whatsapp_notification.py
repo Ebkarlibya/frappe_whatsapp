@@ -172,7 +172,7 @@ class WhatsAppNotification(Document):
             }).save(ignore_permissions=True)
 
             frappe.msgprint("WhatsApp Message Sent", indicator="green", alert=True)
-
+            return True
         except Exception as e:
             response = frappe.flags.integration_request.json()['error']
             error_message = response.get('Error', response.get("message"))
@@ -181,6 +181,7 @@ class WhatsAppNotification(Document):
                 indicator="red",
                 alert=True
             )
+            return False
         finally:
             frappe.get_doc({
                 "doctype": "WhatsApp Notification Log",
