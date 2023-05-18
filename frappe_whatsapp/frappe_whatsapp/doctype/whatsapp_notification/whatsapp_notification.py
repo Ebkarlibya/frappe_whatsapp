@@ -100,7 +100,7 @@ class WhatsAppNotification(Document):
                 # frappe.db.begin()
                 key = doc.get_document_share_key()  # noqa
                 frappe.db.commit()
-                print_format = "Standard"
+                print_format = self.attach_print_format
                 doctype = frappe.get_doc("DocType", doc_data['doctype'])
                 if doctype.custom:
                     if doctype.default_print_format:
