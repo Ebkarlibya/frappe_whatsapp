@@ -142,10 +142,9 @@ class WhatsAppNotification(Document):
                         }
                     }]
                 })
+            self.notify(data ,doc_data)
 
-            self.notify(data)
-
-    def notify(self, data):
+    def notify(self, data , doctype): 
         """Notify."""
         settings = frappe.get_doc(
             "WhatsApp Settings", "WhatsApp Settings",
@@ -161,7 +160,20 @@ class WhatsAppNotification(Document):
                 f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
                 headers=headers, data=json.dumps(data)
             )
+            template_name = data['template']['name']
+            parameters = data['template']['components'][0]['parameters']
+            parameter_values = [param['text'] for param in parameters]
 
+            # Retrieve the template content from the database
+            template = frappe.get_doc("WhatsApp Templates", template_name)
+            template_content = template.template
+
+            # Replace placeholders with parameter values
+            for index, value in enumerate(parameter_values):
+                placeholder = f"{{{{{index+1}}}}}"
+                template_content = template_content.replace(placeholder, value)
+
+            # Include the parameter values in the comment
             frappe.get_doc({
                 "doctype": "WhatsApp Message",
                 "type": "Outgoing",
@@ -172,6 +184,12 @@ class WhatsAppNotification(Document):
             }).save(ignore_permissions=True)
 
             frappe.msgprint("WhatsApp Message Sent", indicator="green", alert=True)
+            
+            doc = frappe.get_doc(doctype)
+            print(doc)
+            doc.add_comment('Comment', f'{template_content}')
+            frappe.db.commit()
+
             return True
         except Exception as e:
             response = frappe.flags.integration_request.json()['error']
@@ -188,7 +206,7 @@ class WhatsAppNotification(Document):
                 "template": self.template,
                 "meta_data": frappe.flags.integration_request.json()
             }).insert(ignore_permissions=True)
-
+    
     def on_trash(self):
         """On delete remove from schedule."""
         if self.notification_type == "Scheduler Event":
