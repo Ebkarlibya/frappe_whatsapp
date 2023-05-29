@@ -17,9 +17,6 @@
   "code",
   "attach_document_print",
   "attach_print_format",
-  "custom_attachment",
-  "attach",
-  "file_name",
   "section_break_11",
   "condition",
   "column_break_12",
@@ -133,26 +130,6 @@
    "label": " Attach Document Print"
   },
   {
-   "default": "0",
-   "description": "WhatsApp Template requires document",
-   "fieldname": "custom_attachment",
-   "fieldtype": "Check",
-   "label": "Custom attachment"
-  },
-  {
-   "depends_on": "eval:doc.custom_attachment",
-   "description": "Upload the file as public. Whatsapp cannot access the private file.",
-   "fieldname": "attach",
-   "fieldtype": "Attach",
-   "label": "Attach"
-  },
-  {
-   "depends_on": "eval:doc.custom_attachment",
-   "fieldname": "file_name",
-   "fieldtype": "Data",
-   "label": "File name"
-  },
-  {
    "fieldname": "header_type",
    "fieldtype": "Data",
    "hidden": 1,
@@ -168,7 +145,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-18 17:03:00.573070",
+ "modified": "2023-05-29 13:25:04.906633",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification",
