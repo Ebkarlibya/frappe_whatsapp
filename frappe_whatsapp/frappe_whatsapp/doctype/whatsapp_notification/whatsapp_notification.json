@@ -14,6 +14,7 @@
   "column_break_3",
   "disabled",
   "template",
+  "url_template",
   "code",
   "attach_document_print",
   "attach_print_format",
@@ -141,11 +142,19 @@
    "fieldtype": "Link",
    "label": "Attach Print Format",
    "options": "Print Format"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.template",
+   "fieldname": "url_template",
+   "fieldtype": "Check",
+   "label": "URL Template",
+   "mandatory_depends_on": "eval:doc.template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-29 13:25:04.906633",
+ "modified": "2023-08-07 11:10:48.024202",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification",
