@@ -1,12 +1,13 @@
 {
  "actions": [],
- "autoname": "format:{WN}-{####}",
+ "autoname": "field:notification_name",
  "creation": "2022-10-27 22:04:58.515829",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "notification_type",
+  "notification_name",
   "reference_doctype",
   "field_name",
   "event_frequency",
@@ -100,7 +101,8 @@
    "fieldname": "field_name",
    "fieldtype": "Data",
    "label": "Field Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "column_break_12",
@@ -150,15 +152,22 @@
    "fieldtype": "Check",
    "label": "URL Template",
    "mandatory_depends_on": "eval:doc.template"
+  },
+  {
+   "fieldname": "notification_name",
+   "fieldtype": "Data",
+   "label": "Notification Name",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-07 11:10:48.024202",
+ "modified": "2023-08-23 22:25:23.511058",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification",
- "naming_rule": "Expression",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

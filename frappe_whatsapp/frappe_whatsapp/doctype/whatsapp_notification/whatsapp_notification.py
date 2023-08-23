@@ -20,7 +20,7 @@ class WhatsAppNotification(Document):
                 filters={"dt": self.reference_doctype},
                 fields=["fieldname"]
             )
-            if not any(field.fieldname == self.field_name for field in fields):  # noqa
+            if not any(field.fieldname == self.field_name for field in fields): # noqa
                 frappe.throw(f"Field name {self.field_name} does not exists")
 
     def send_scheduled_message(self) -> dict:
@@ -95,18 +95,7 @@ class WhatsAppNotification(Document):
                     "type": "body",
                     "parameters": parameters
                 }]
-            if self.url_template == 1:  # Check if doc.urltemplate is set to "yes"
-                data['template']["components"].append({
-                    "type": "button",
-                    "sub_type": "url",
-                    "index": "0",
-                    "parameters": [
-                        {
-                            "type": "text",
-                            "text": doc.name
-                        }
-                    ]
-                })
+
             if self.attach_document_print:
                 # frappe.db.begin()
                 key = doc.get_document_share_key()  # noqa
@@ -129,11 +118,12 @@ class WhatsAppNotification(Document):
                 link = get_pdf_link(
                     doc_data['doctype'],
                     doc_data['name'],
-                    print_format=self.attach_print_format
+                    print_format = self.attach_print_format
                 )
 
                 filename = f'{doc_data["name"]}.pdf'
                 url = f'{frappe.utils.get_url()}{link}&key={key}'
+
             if template.header_type == 'DOCUMENT':
                 data['template']['components'].append({
                     "type": "header",
@@ -145,9 +135,9 @@ class WhatsAppNotification(Document):
                         }
                     }]
                 })
-            self.notify(data, doc_data)
+            self.notify(data ,doc_data)
 
-    def notify(self, data, doctype):
+    def notify(self, data , doctype): 
         """Notify."""
         settings = frappe.get_doc(
             "WhatsApp Settings", "WhatsApp Settings",
@@ -186,9 +176,8 @@ class WhatsAppNotification(Document):
                 "message_id": response['messages'][0]['id']
             }).save(ignore_permissions=True)
 
-            frappe.msgprint("WhatsApp Message Sent",
-                            indicator="green", alert=True)
-
+            frappe.msgprint("WhatsApp Message Sent", indicator="green", alert=True)
+            
             doc = frappe.get_doc(doctype)
             print(doc)
             doc.add_comment('Comment', f'{template_content}')
@@ -205,12 +194,21 @@ class WhatsAppNotification(Document):
             )
             return False
         finally:
+            meta_data = frappe.flags.integration_request.json()
+
+            if "contacts" in meta_data and len(meta_data["contacts"]) > 0:
+                wa_id = meta_data["contacts"][0]["wa_id"]
+            else:
+                wa_id = None
             frappe.get_doc({
                 "doctype": "WhatsApp Notification Log",
                 "template": self.template,
-                "meta_data": frappe.flags.integration_request.json()
+                "meta_data": meta_data,
+                "doccement": doctype.doctype,
+                "data": doctype.name,
+                "wa_id": wa_id
             }).insert(ignore_permissions=True)
-
+    
     def on_trash(self):
         """On delete remove from schedule."""
         if self.notification_type == "Scheduler Event":
@@ -221,7 +219,7 @@ class WhatsAppNotification(Document):
     def after_insert(self):
         """After insert hook."""
         if self.notification_type == "Scheduler Event":
-            method = f"frappe_whatsapp.utils.trigger_whatsapp_notifications_{self.event_frequency.lower().replace(' ', '_')}"  # noqa
+            method = f"frappe_whatsapp.utils.trigger_whatsapp_notifications_{self.event_frequency.lower().replace(' ', '_')}" # noqa
             job = frappe.get_doc(
                 {
                     "doctype": "Scheduled Job Type",
