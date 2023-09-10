@@ -95,7 +95,18 @@ class WhatsAppNotification(Document):
                     "type": "body",
                     "parameters": parameters
                 }]
-
+            if self.url_template == 1:  # Check if doc.urltemplate is set to "yes"
+                data['template']["components"].append({
+                    "type": "button",
+                    "sub_type": "url",
+                    "index": "0",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": doc.name
+                        }
+                    ]
+                })
             if self.attach_document_print:
                 # frappe.db.begin()
                 key = doc.get_document_share_key()  # noqa
