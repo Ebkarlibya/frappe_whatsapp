@@ -101,8 +101,7 @@
    "fieldname": "field_name",
    "fieldtype": "Data",
    "label": "Field Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "column_break_12",
@@ -163,7 +162,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-23 22:25:23.511058",
+ "modified": "2023-09-10 10:13:35.792555",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification",
