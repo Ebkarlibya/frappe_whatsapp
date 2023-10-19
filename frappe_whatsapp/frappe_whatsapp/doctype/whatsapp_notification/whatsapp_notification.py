@@ -95,7 +95,7 @@ class WhatsAppNotification(Document):
                     "type": "body",
                     "parameters": parameters
                 }]
-            if self.url_template == 1:  # Check if doc.urltemplate is set to "yes"
+            if self.url_template == 1:  # كنت حاذفها بالغلط xD
                 data['template']["components"].append({
                     "type": "button",
                     "sub_type": "url",
@@ -146,17 +146,8 @@ class WhatsAppNotification(Document):
                         }
                     }]
                 })
-            existing_log = frappe.get_all(
-                "WhatsApp Notification Log",
-                filters={
-                    "doccement": doc_data['doctype'], "wa_id": data['to'], "data": doc_data['name']},
-                fields=["name"]
-            )
-            if len(existing_log) > 0:
-                frappe.msgprint("Notification already sent.",
-                                indicator="orange", alert=True)
-            else:
-                self.notify(data, doc_data)
+
+            self.notify(data, doc_data)
 
     def notify(self, data, doctype):
         """Notify."""
@@ -215,17 +206,6 @@ class WhatsAppNotification(Document):
                 alert=True
             )
             return False
-        finally:
-            meta_data = frappe.flags.integration_request.json()
-
-            frappe.get_doc({
-                "doctype": "WhatsApp Notification Log",
-                "template": self.template,
-                "meta_data": meta_data,
-                "doccement": doctype.doctype,
-                "data": doctype.name,
-                "wa_id": data['to']
-            }).insert(ignore_permissions=True)
 
     def on_trash(self):
         """On delete remove from schedule."""

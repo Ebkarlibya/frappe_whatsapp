@@ -7,9 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "template",
-  "doccement",
-  "data",
-  "wa_id",
   "meta_data"
  ],
  "fields": [
@@ -22,28 +19,11 @@
    "fieldname": "meta_data",
    "fieldtype": "JSON",
    "label": "Meta Data"
-  },
-  {
-   "fieldname": "data",
-   "fieldtype": "Dynamic Link",
-   "label": "Data",
-   "options": "doccement"
-  },
-  {
-   "fieldname": "doccement",
-   "fieldtype": "Link",
-   "label": "Document",
-   "options": "DocType"
-  },
-  {
-   "fieldname": "wa_id",
-   "fieldtype": "Data",
-   "label": "Whatsapp ID"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-23 23:23:37.672701",
+ "modified": "2023-10-19 14:14:33.112470",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification Log",
