@@ -102,7 +102,6 @@ class WhatsAppTemplates(Document):
                 title=res.get("error_user_title", "Error"),
             )
 
-
     def get_settings(self):
         """Get whatsapp settings."""
         settings = frappe.get_doc("WhatsApp Settings", "WhatsApp Settings")
@@ -124,7 +123,8 @@ class WhatsAppTemplates(Document):
         except Exception:
             res = frappe.flags.integration_request.json()['error']
             if res.get("error_user_title") == "Message Template Not Found":
-                frappe.msgprint("Deleted locally", res.get("error_user_title", "Error"), alert=True)
+                frappe.msgprint("Deleted locally", res.get(
+                    "error_user_title", "Error"), alert=True)
             else:
                 frappe.throw(
                     msg=res.get("error_user_msg"),
@@ -142,7 +142,8 @@ class WhatsAppTemplates(Document):
 
         else:
             if not self.sample:
-                key = frappe.get_doc(self.doctype, self.name).get_document_share_key()
+                key = frappe.get_doc(
+                    self.doctype, self.name).get_document_share_key()
                 link = get_pdf_link(self.doctype, self.name)
                 self.sample = f'{frappe.utils.get_url()}{link}&key={key}'
             header.update({"example": {
@@ -208,7 +209,8 @@ def fetch():
                 elif component['type'] == 'BODY':
                     doc.template = component['text']
                     if component.get('example'):
-                        doc.sample_values = ','.join(component['example']['body_text'][0])
+                        doc.sample_values = ','.join(
+                            component['example']['body_text'][0])
 
             # if document exists update else insert
             # used db_update and db_insert to ignore hooks

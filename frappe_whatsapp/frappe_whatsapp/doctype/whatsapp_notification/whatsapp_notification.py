@@ -166,7 +166,8 @@ class WhatsAppNotification(Document):
                 headers=headers, data=json.dumps(data)
             )
             template_name = data['template']['name']
-            parameters = data['template']['components'][0]['parameters']
+            parameters = data['template']['components'][0]['parameters'] if len(
+                data['template']['components']) > 0 else []
             parameter_values = [param['text'] for param in parameters]
 
             # Retrieve the template content from the database
@@ -192,8 +193,8 @@ class WhatsAppNotification(Document):
                             indicator="green", alert=True)
 
             doc = frappe.get_doc(doctype)
-            print(doc)
             doc.add_comment('Comment', f'{template_content}')
+            set_property_after_alert(self, doc)
             frappe.db.commit()
 
             return True
@@ -234,3 +235,37 @@ class WhatsAppNotification(Document):
             number = number[1:len(number)]
 
         return number
+
+
+def set_property_after_alert(self, doc):
+    """This functions gets the field and the name to set in the required doctype
+
+    Args:
+        doc (Document): The Document in which to set the property after the alert.
+    """
+    if self.set_property_after_alert:
+        allow_update = True
+        if (
+                doc.docstatus.is_submitted()
+                and not doc.meta.get_field(self.set_property_after_alert).allow_on_submit
+        ):
+            allow_update = False
+        try:
+            if allow_update and not doc.flags.in_notification_update:
+                fieldname = self.set_property_after_alert
+                value = self.property_value
+
+                if doc.meta.get_field(fieldname).fieldtype in frappe.model.numeric_fieldtypes:
+                    value = frappe.utils.cint(value)
+                doc.reload()
+                doc.set(fieldname, value)
+                # doc.flags.updater_reference = {
+                #     "doctype": self.doctype,
+                #     "docname": self.name,
+                #     "label": _("via Notification"),
+                # }
+                # doc.flags.in_notification_update = True
+                doc.save(ignore_permissions=True)
+                # doc.flags.in_notification_update = False
+        except Exception:
+            self.log_error("Document update failed")
