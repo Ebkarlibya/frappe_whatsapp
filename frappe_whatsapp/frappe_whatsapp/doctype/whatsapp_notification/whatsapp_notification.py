@@ -257,15 +257,10 @@ def set_property_after_alert(self, doc):
 
                 if doc.meta.get_field(fieldname).fieldtype in frappe.model.numeric_fieldtypes:
                     value = frappe.utils.cint(value)
+
+                print(fieldname, value)
                 doc.reload()
-                doc.set(fieldname, value)
-                # doc.flags.updater_reference = {
-                #     "doctype": self.doctype,
-                #     "docname": self.name,
-                #     "label": _("via Notification"),
-                # }
-                # doc.flags.in_notification_update = True
-                doc.save(ignore_permissions=True)
-                # doc.flags.in_notification_update = False
+                doc.db_set(fieldname, value,  commit=True)
+
         except Exception:
             self.log_error("Document update failed")
