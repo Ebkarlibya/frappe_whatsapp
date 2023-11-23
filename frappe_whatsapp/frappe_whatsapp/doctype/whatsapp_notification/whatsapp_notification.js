@@ -1,6 +1,6 @@
 // Copyright (c) 2022, Shridhar Patil and contributors
 // For license information, please see license.txt
-whatsapp_notification = {
+let whatsapp_notification = {
   setup_fieldname_select: function (frm) {
     // get the doctype to update fields
     if (!frm.doc.reference_doctype) {
