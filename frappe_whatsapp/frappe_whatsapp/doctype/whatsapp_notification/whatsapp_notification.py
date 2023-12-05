@@ -134,7 +134,7 @@ class WhatsAppNotification(Document):
 
                 filename = f'{doc_data["name"]}.pdf'
                 url = f'{frappe.utils.get_url()}{link}&key={key}'
-                frappe.log_error(f"Printing document: {doc_data['doctype']} {doc_data['name']} - URL: {url}")
+                # frappe.log_error(f"Printing document: {doc_data['doctype']} {doc_data['name']} - URL: {url}")
             if template.header_type == 'DOCUMENT':
                 data['template']['components'].append({
                     "type": "header",
