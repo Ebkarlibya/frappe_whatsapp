@@ -23,7 +23,8 @@
   {
    "fieldname": "code",
    "fieldtype": "Code",
-   "options": "HTML"
+   "options": "HTML",
+   "read_only": 1
   },
   {
    "description": "Enter fields in the right sequence as per the template parameters.",
@@ -35,7 +36,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-10 10:38:25.769339",
+ "modified": "2024-01-10 10:40:09.815898",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "Whatsapp Campaign",
