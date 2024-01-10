@@ -1,14 +1,19 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:campaign_name",
  "creation": "2024-01-10 10:38:25.769339",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "campaign_name",
   "template",
   "code",
+  "section_break_fwcgs",
+  "customers",
+  "column_break_l3xz8",
   "fields"
  ],
  "fields": [
@@ -32,14 +37,37 @@
    "fieldtype": "Table",
    "label": "Fields",
    "options": "WhatsApp Message Fields"
+  },
+  {
+   "fieldname": "campaign_name",
+   "fieldtype": "Data",
+   "label": "Campaign Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Mobile number with country code",
+   "fieldname": "customers",
+   "fieldtype": "Table",
+   "label": "Customers",
+   "options": "Whatsapp Campaign Customers"
+  },
+  {
+   "fieldname": "section_break_fwcgs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_l3xz8",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-10 10:40:09.815898",
+ "modified": "2024-01-10 12:06:23.925352",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
- "name": "Whatsapp Campaign",
+ "name": "WhatsApp Campaign",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
