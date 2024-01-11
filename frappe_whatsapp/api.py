@@ -1,6 +1,7 @@
-import frappe
 import json
-
+import frappe
+from frappe.model.document import Document
+from frappe.integrations.utils import make_post_request
 @frappe.whitelist()
 def send_whatsapp_message(customers,template,fields):
     """Send WhatsApp message to a number"""
