@@ -71,6 +71,8 @@ def notify(data):
                 "message_type": "Template",
                 "message_id": response['messages'][0]['id']
             }).save(ignore_permissions=True)
+        frappe.msgprint("WhatsApp Message Sent",
+                            indicator="green", alert=True)
     except Exception as e:
         res = frappe.flags.integration_request.json()['error']
         error_message = res.get('Error', res.get("message"))
