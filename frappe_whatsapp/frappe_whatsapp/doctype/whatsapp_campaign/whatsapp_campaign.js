@@ -24,7 +24,7 @@ frappe.ui.form.on('WhatsApp Campaign', {
 					return customer.field_name;
 				});
 				frappe.call({
-					method: "frappe_whatsapp.api.send_whatsapp_message",
+					method: "frappe_whatsapp.api.send_whatsapp_messages",
 					args: {
 						customers: list_of_customers,
 						template: frm.doc.template,
