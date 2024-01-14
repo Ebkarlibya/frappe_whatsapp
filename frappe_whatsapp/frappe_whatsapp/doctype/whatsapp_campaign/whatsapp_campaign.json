@@ -46,6 +46,7 @@
    "unique": 1
   },
   {
+   "allow_bulk_edit": 1,
    "description": "Mobile number with country code",
    "fieldname": "customers",
    "fieldtype": "Table",
@@ -63,7 +64,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-10 12:06:23.925352",
+ "modified": "2024-01-14 13:04:40.795794",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Campaign",
