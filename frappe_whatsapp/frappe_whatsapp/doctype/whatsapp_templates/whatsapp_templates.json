@@ -90,7 +90,7 @@
    "fieldname": "header_type",
    "fieldtype": "Select",
    "label": "Header Type",
-   "options": "\nTEXT\nDOCUMENT"
+   "options": "\nTEXT\nDOCUMENT\nIMAGE"
   },
   {
    "depends_on": "eval:doc.header_type && doc.header_type != 'TEXT'",
@@ -107,7 +107,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-04 15:34:18.507547",
+ "modified": "2024-02-10 11:49:33.903697",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Templates",

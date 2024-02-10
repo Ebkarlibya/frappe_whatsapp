@@ -146,6 +146,17 @@ class WhatsAppNotification(Document):
                         }
                     }]
                 })
+            elif template.header_type == 'IMAGE':
+                data['template']['components'].append({
+                    "type": "header",
+                    "parameters": [{
+                        "type": "image",
+                        "image": {
+                            "link": url
+                        }
+                    }]
+                })
+            self.content_type = template.header_type.lower()
 
             self.notify(data, doc_data)
 

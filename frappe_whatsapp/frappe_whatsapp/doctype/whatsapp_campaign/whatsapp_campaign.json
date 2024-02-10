@@ -11,6 +11,8 @@
   "campaign_name",
   "template",
   "code",
+  "is_document",
+  "url",
   "section_break_fwcgs",
   "customers",
   "column_break_l3xz8",
@@ -60,11 +62,23 @@
   {
    "fieldname": "column_break_l3xz8",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_document",
+   "fieldtype": "Check",
+   "label": "Is Document"
+  },
+  {
+   "depends_on": "eval:cur_frm.doc.is_document",
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "URL"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-14 13:04:40.795794",
+ "modified": "2024-02-10 12:01:19.112143",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Campaign",

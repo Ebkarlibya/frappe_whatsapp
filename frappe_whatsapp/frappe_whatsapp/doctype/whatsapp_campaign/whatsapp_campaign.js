@@ -30,6 +30,7 @@ frappe.ui.form.on('WhatsApp Campaign', {
 							customers: list_of_customers,
 							template: frm.doc.template,
 							fields: fields,
+							url: frm.doc.is_document == 1 ? frm.doc.url : undefined,
 						},
 						callback: function (r) {
 							if (r.message) {

@@ -2,7 +2,7 @@ import json
 import frappe
 from frappe.integrations.utils import make_post_request
 @frappe.whitelist()
-def send_whatsapp_messages(customers, template, fields):
+def send_whatsapp_messages(customers, template, fields, url = None):
     try:
         fields = json.loads(fields)
         customers = json.loads(customers)
@@ -40,7 +40,16 @@ def send_whatsapp_messages(customers, template, fields):
                         "type": "body",
                         "parameters": parameters
                     }]
-
+                elif template.header_type == 'IMAGE':
+                    data['template']['components'].append({
+                        "type": "header",
+                        "parameters": [{
+                            "type": "image",
+                            "image": {
+                                "link": url
+                            }
+                        }]
+                    })
                 notify(data)
 
                 progress_percentage = int((index + 1) / total_customers * 100)
