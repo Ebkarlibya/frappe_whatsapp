@@ -1,7 +1,7 @@
 """Webhook."""
 import frappe
 import json
-
+from frappe.integrations.utils import make_post_request
 from werkzeug.wrappers import Response
 
 
@@ -50,6 +50,16 @@ def post():
                     "from": message['from'],
                     "message": message['text']['body']
                 }).insert(ignore_permissions=True)
+            elif message['type'] == 'request_welcome':
+                print(message)
+                print("Request Welcome")
+                frappe.get_doc({
+                    "doctype": "WhatsApp Message",
+                    "type": "Incoming",
+                    "from": message['from'],
+                    "message": 'Request Welcome'
+                }).insert(ignore_permissions=True)
+                send_welcome_message(message['from'])
     else:
         changes = None
         try:
@@ -59,7 +69,54 @@ def post():
         update_status(changes)
     return
 
+def send_welcome_message(phone_number):
+    """Send welcome message."""
+    settings = frappe.get_doc(
+        "WhatsApp Settings", "WhatsApp Settings",
+    )
+    token = settings.get_password("token")
+    template = frappe.get_doc(
+        "WhatsApp Templates", "welcome_message",
+    )
+    headers = {
+        "authorization": f"Bearer {token}",
+        "content-type": "application/json"
+    }
+    data = {
+                    "messaging_product": "whatsapp",
+                    "to": phone_number,
+                    "type": "template",
+                    "template": {
+                        "name": template.name,
+                        "language": {
+                            "code": template.language_code
+                        },
+                        "components": []
+                    }
+                }
+    print(data)
+    try:
+        response = make_post_request(
+            f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
+            headers=headers, data=json.dumps(data)
+        )
+        print(response)
+        frappe.get_doc({
+                "doctype": "WhatsApp Message",
+                "type": "Outgoing",
+                "message": str(data['template']),
+                "to": data['to'],
+                "message_type": "Template",
+                "message_id": response['messages'][0]['id']
+            }).save(ignore_permissions=True)
 
+    except Exception as e:
+        res = frappe.flags.integration_request.json()['error']
+        error_message = res.get('Error', res.get("message"))
+        frappe.throw(
+            msg=error_message,
+            title=res.get("error_user_title", "Error")
+        )
 def update_status(data):
     """Update status hook."""
     if data.get("field") == "message_template_status_update":
