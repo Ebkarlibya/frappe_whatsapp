@@ -2,7 +2,7 @@ import json
 import frappe
 from frappe.integrations.utils import make_post_request
 @frappe.whitelist()
-def send_whatsapp_messages(customers, template, fields, url = None):
+def send_whatsapp_messages(customers, template, name,fields, url=None):
     try:
         fields = json.loads(fields)
         customers = json.loads(customers)
@@ -51,24 +51,24 @@ def send_whatsapp_messages(customers, template, fields, url = None):
                         }]
                     })
                 notify(data)
-
+                frappe.db.set_value("Whatsapp Campaign Customers", {"parent": name, "phone_number": customer}, "is_send", 1)
                 progress_percentage = int((index + 1) / total_customers * 100)
                 frappe.publish_progress(progress_percentage, title='Sending To All Customers', description='please wait')
 
             except Exception as e:
                 frappe.error_log(frappe.get_traceback(), "WhatsApp Campaign Error")
-                frappe.throw(f"Error while sending WhatsApp Campaign Message to {customer}: {str(e)}")
+                frappe.msgprint(f"Error while sending WhatsApp Campaign Message to {customer}: {str(e)}")
+                continue  
 
         frappe.msgprint("WhatsApp Messages Sent to all customers",
                         indicator="green", alert=True)
-
+        return True
     except Exception as e:
         frappe.error_log(frappe.get_traceback(), "WhatsApp Campaign Error")
         frappe.throw("Error while sending WhatsApp Campaign Messages")
-
+        return False
 def notify(data):
     """Notify."""
-    print(data)
     settings = frappe.get_doc(
         "WhatsApp Settings", "WhatsApp Settings",
     )
@@ -83,7 +83,6 @@ def notify(data):
             f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
             headers=headers, data=json.dumps(data)
         )
-        print(response)
         frappe.get_doc({
                 "doctype": "WhatsApp Message",
                 "type": "Outgoing",

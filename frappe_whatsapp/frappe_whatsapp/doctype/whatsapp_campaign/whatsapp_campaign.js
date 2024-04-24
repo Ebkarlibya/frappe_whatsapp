@@ -16,10 +16,8 @@ frappe.ui.form.on('WhatsApp Campaign', {
 					highlight_field(frm, "template");
 					return;
 				}
-				const list_of_customers = frm.doc.customers.map((customer) => {
-					return customer.phone_number;
-				}
-				);
+				
+				const list_of_customers = frm.doc.customers.filter(customer => !customer.is_send).map(customer => customer.phone_number);
 				if (list_of_customers.length > 0) {
 					const fields = frm.doc.fields.map((customer) => {
 						return customer.field_name;
@@ -27,6 +25,7 @@ frappe.ui.form.on('WhatsApp Campaign', {
 					frappe.call({
 						method: "frappe_whatsapp.api.send_whatsapp_messages",
 						args: {
+							name : frm.doc.name,
 							customers: list_of_customers,
 							template: frm.doc.template,
 							fields: fields,
@@ -34,7 +33,8 @@ frappe.ui.form.on('WhatsApp Campaign', {
 						},
 						callback: function (r) {
 							if (r.message) {
-								frappe.msgprint("Message Sent Successfully");
+								frm.reload_doc();
+								frm.refresh_field('customers');
 							}
 						},
 					});
