@@ -50,9 +50,8 @@ def post():
                     "from": message['from'],
                     "message": message['text']['body']
                 }).insert(ignore_permissions=True)
+                send_welcome_message(message['from'])
             elif message['type'] == 'request_welcome':
-                print(message)
-                print("Request Welcome")
                 frappe.get_doc({
                     "doctype": "WhatsApp Message",
                     "type": "Incoming",
@@ -94,13 +93,11 @@ def send_welcome_message(phone_number):
                         "components": []
                     }
                 }
-    print(data)
     try:
         response = make_post_request(
             f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
             headers=headers, data=json.dumps(data)
         )
-        print(response)
         frappe.get_doc({
                 "doctype": "WhatsApp Message",
                 "type": "Outgoing",
