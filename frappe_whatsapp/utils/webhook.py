@@ -51,14 +51,14 @@ def post():
                     "message": message['text']['body']
                 }).insert(ignore_permissions=True)
                 send_welcome_message(message['from'])
-            elif message['type'] == 'request_welcome':
-                frappe.get_doc({
-                    "doctype": "WhatsApp Message",
-                    "type": "Incoming",
-                    "from": message['from'],
-                    "message": 'Request Welcome'
-                }).insert(ignore_permissions=True)
-                send_welcome_message(message['from'])
+            # elif message['type'] == 'request_welcome':
+            #     frappe.get_doc({
+            #         "doctype": "WhatsApp Message",
+            #         "type": "Incoming",
+            #         "from": message['from'],
+            #         "message": 'Request Welcome'
+            #     }).insert(ignore_permissions=True)
+            #     send_welcome_message(message['from'])
     else:
         changes = None
         try:
