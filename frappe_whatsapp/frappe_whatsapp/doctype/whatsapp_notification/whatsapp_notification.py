@@ -172,43 +172,26 @@ class WhatsAppNotification(Document):
             "content-type": "application/json"
         }
         try:
-            response = make_post_request(
-                f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
-                headers=headers, data=json.dumps(data)
-            )
-            template_name = data['template']['name']
-            parameters = data['template']['components'][0]['parameters'] if len(
-                data['template']['components']) > 0 else []
-            parameter_values = [param['text'] for param in parameters]
+                    response = make_post_request(
+                        f"{settings.url}/{settings.version}/{settings.phone_id}/messages",
+                        headers=headers, data=json.dumps(data)
+                    )
 
-            # Retrieve the template content from the database
-            template = frappe.get_doc("WhatsApp Templates", template_name)
-            template_content = template.template
+                    if not self.get("content_type"):
+                        self.content_type = 'text'
 
-            # Replace placeholders with parameter values
-            for index, value in enumerate(parameter_values):
-                placeholder = f"{{{{{index+1}}}}}"
-                template_content = template_content.replace(placeholder, value)
+                    frappe.get_doc({
+                        "doctype": "WhatsApp Message",
+                        "type": "Outgoing",
+                        "message": str(data['template']),
+                        "to": data['to'],
+                        "message_type": "Template",
+                        "message_id": response['messages'][0]['id'],
+                        "content_type": self.content_type
+                    }).save(ignore_permissions=True)
 
-            # Include the parameter values in the comment
-            frappe.get_doc({
-                "doctype": "WhatsApp Message",
-                "type": "Outgoing",
-                "message": str(data['template']),
-                "to": data['to'],
-                "message_type": "Template",
-                "message_id": response['messages'][0]['id']
-            }).save(ignore_permissions=True)
+                    frappe.msgprint("WhatsApp Message Triggered", indicator="green", alert=True)
 
-            frappe.msgprint("WhatsApp Message Sent",
-                            indicator="green", alert=True)
-
-            doc = frappe.get_doc(doctype)
-            doc.add_comment('Comment', f'{template_content}')
-            set_property_after_alert(self, doc)
-            frappe.db.commit()
-
-            return True
         except Exception as e:
             response = frappe.flags.integration_request.json()['error']
             error_message = response.get('Error', response.get("message"))
@@ -217,7 +200,12 @@ class WhatsAppNotification(Document):
                 indicator="red",
                 alert=True
             )
-            return False
+        finally:
+            frappe.get_doc({
+                "doctype": "WhatsApp Notification Log",
+                "template": self.template,
+                "meta_data": frappe.flags.integration_request.json()
+            }).insert(ignore_permissions=True)
 
     def on_trash(self):
         """On delete remove from schedule."""
