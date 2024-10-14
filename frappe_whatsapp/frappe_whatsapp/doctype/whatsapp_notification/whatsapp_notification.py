@@ -193,13 +193,7 @@ class WhatsAppNotification(Document):
                     frappe.msgprint("WhatsApp Message Triggered", indicator="green", alert=True)
 
         except Exception as e:
-            response = frappe.flags.integration_request.json()['error']
-            error_message = response.get('Error', response.get("message"))
-            frappe.msgprint(
-                f"Failed to trigger whatsapp message: {error_message}",
-                indicator="red",
-                alert=True
-            )
+            frappe.log_error(f"Error sending WhatsApp message: {e}")
         finally:
             frappe.get_doc({
                 "doctype": "WhatsApp Notification Log",
