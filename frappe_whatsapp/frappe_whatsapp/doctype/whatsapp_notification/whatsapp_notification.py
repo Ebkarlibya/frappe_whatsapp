@@ -179,7 +179,7 @@ class WhatsAppNotification(Document):
 
                     if not self.get("content_type"):
                         self.content_type = 'text'
-
+                    print(response)
                     frappe.get_doc({
                         "doctype": "WhatsApp Message",
                         "type": "Outgoing",

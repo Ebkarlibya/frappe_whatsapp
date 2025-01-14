@@ -50,6 +50,17 @@ def send_whatsapp_messages(customers, template, name,fields, url=None):
                             }
                         }]
                     })
+                elif template.header_type == 'DOCUMENT':
+                    data['template']['components'].append({
+                        "type": "header",
+                        "parameters": [{
+                            "type": "document",
+                            "document": {
+                                "link": url,
+                                "filename": f"{name}.pdf"
+                            }
+                        }]
+                    })
                 notify(data)
                 frappe.db.set_value("Whatsapp Campaign Customers", {"parent": name, "phone_number": customer}, "is_send", 1)
                 progress_percentage = int((index + 1) / total_customers * 100)
