@@ -57,11 +57,16 @@ class WhatsAppTemplates(Document):
             self.status = response['status']
             # frappe.db.set_value("WhatsApp Templates", self.name, "id", response['id'])
         except Exception as e:
-            res = frappe.flags.integration_request.json()['error']
-            error_message = res.get('error_user_msg', res.get("message"))
+            try:
+                integration_error = frappe.flags.integration_request.json().get('error', {})
+                error_message = integration_error.get('error_user_msg', integration_error.get("message", str(e)))
+                error_title = integration_error.get("error_user_title", "Error")
+            except Exception:
+                error_message = str(e)
+                error_title = "Error"
             frappe.throw(
                 msg=error_message,
-                title=res.get("error_user_title", "Error"),
+                title=error_title,
             )
 
     def on_update(self):
@@ -96,10 +101,16 @@ class WhatsAppTemplates(Document):
                 headers=self._headers, data=json.dumps(data)
             )
         except Exception as e:
-            res = frappe.flags.integration_request.json()['error']
+            try:
+                integration_error = frappe.flags.integration_request.json().get('error', {})
+                error_message = integration_error.get('error_user_msg', integration_error.get("message", str(e)))
+                error_title = integration_error.get("error_user_title", "Error")
+            except Exception:
+                error_message = str(e)
+                error_title = "Error"
             frappe.throw(
-                msg=res.get('error_user_msg', res.get("message")),
-                title=res.get("error_user_title", "Error"),
+                msg=error_message,
+                title=error_title,
             )
 
     def get_settings(self):
@@ -121,14 +132,19 @@ class WhatsAppTemplates(Document):
         try:
             make_request("DELETE", url, headers=self._headers)
         except Exception:
-            res = frappe.flags.integration_request.json()['error']
-            if res.get("error_user_title") == "Message Template Not Found":
-                frappe.msgprint("Deleted locally", res.get(
-                    "error_user_title", "Error"), alert=True)
+            try:
+                integration_error = frappe.flags.integration_request.json().get('error', {})
+                error_message = integration_error.get('error_user_msg', integration_error.get("message", str(e)))
+                error_title = integration_error.get("error_user_title", "Error")
+            except Exception:
+                error_message = str(e)
+                error_title = "Error"
+            if error_title == "Message Template Not Found":
+                frappe.msgprint("Deleted locally", error_title, alert=True)
             else:
                 frappe.throw(
-                    msg=res.get("error_user_msg"),
-                    title=res.get("error_user_title", "Error"),
+                    msg=error_message,
+                    title=error_title,
                 )
 
     def get_header(self):
@@ -208,9 +224,11 @@ def fetch():
                 # update template text
                 elif component['type'] == 'BODY':
                     doc.template = component['text']
-                    if component.get('example'):
-                        doc.sample_values = ','.join(
-                            component['example']['body_text'][0])
+                    example = component.get('example')
+                    if example and 'body_text' in example and example['body_text']:
+                        # join first list if available and ensure it's a list before joining
+                        body_text = example['body_text'][0] if isinstance(example['body_text'], list) else example['body_text']
+                        doc.sample_values = ','.join(body_text) if isinstance(body_text, list) else str(body_text)
 
             # if document exists update else insert
             # used db_update and db_insert to ignore hooks
@@ -221,11 +239,16 @@ def fetch():
             frappe.db.commit()
 
     except Exception as e:
-        res = frappe.flags.integration_request.json()['error']
-        error_message = res.get('error_user_msg', res.get("message"))
+        try:
+            integration_error = frappe.flags.integration_request.json().get('error', {})
+            error_message = integration_error.get('error_user_msg', integration_error.get("message", str(e)))
+            error_title = integration_error.get("error_user_title", "Error")
+        except Exception:
+            error_message = str(e)
+            error_title = "Error"
         frappe.throw(
             msg=error_message,
-            title=res.get("error_user_title", "Error"),
+            title=error_title,
         )
 
     return "Successfully fetched templates from meta"
