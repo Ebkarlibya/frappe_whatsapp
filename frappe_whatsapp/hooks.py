@@ -125,7 +125,6 @@ scheduler_events = {
     ],
     "daily": [
         "frappe_whatsapp.utils.trigger_whatsapp_notifications_daily",
-        "frappe_whatsapp.frappe_whatsapp.doctype.whatsapp_notification.whatsapp_notification.trigger_notifications",
     ],
     "daily_long": [
         "frappe_whatsapp.utils.trigger_whatsapp_notifications_daily_long",
