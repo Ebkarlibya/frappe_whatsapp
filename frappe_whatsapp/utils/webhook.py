@@ -3,17 +3,9 @@ import frappe
 import json
 import requests
 import time
-from frappe.utils import get_site_name
 from werkzeug.wrappers import Response
 import frappe.utils
 
-settings = frappe.get_doc(
-			"WhatsApp Settings", "WhatsApp Settings",
-		)
-token = settings.get_password("token")
-url = f"{settings.url}/{settings.version}/"
-bench_location = frappe.utils.get_bench_path()
-site_name = get_site_name(frappe.local.request.host)
 
 @frappe.whitelist(allow_guest=True)
 def webhook():
@@ -27,7 +19,7 @@ def get():
 	"""Get."""
 	hub_challenge = frappe.form_dict.get("hub.challenge")
 	webhook_verify_token = frappe.db.get_single_value(
-		"Whatsapp Settings", "webhook_verify_token"
+		"WhatsApp Settings", "webhook_verify_token"
 	)
 
 	if frappe.form_dict.get("hub.verify_token") != webhook_verify_token:
@@ -49,10 +41,22 @@ def post():
 		messages = data["entry"][0]["changes"][0]["value"].get("messages", [])
 	except KeyError:
 		messages = data["entry"]["changes"][0]["value"].get("messages", [])
+	sender_profile_name = next(
+		(
+			contact.get("profile", {}).get("name")
+			for entry in data.get("entry", [])
+			for change in entry.get("changes", [])
+			for contact in change.get("value", {}).get("contacts", [])
+		),
+		None,
+	)
+
 
 	if messages:
 		for message in messages:
 			message_type = message['type']
+			is_reply = True if message.get('context') and 'forwarded' not in message.get('context') else False
+			reply_to_message_id = message['context']['id'] if is_reply else None
 			if message_type == 'text':
 				frappe.get_doc({
 					"doctype": "WhatsApp Message",
@@ -60,9 +64,42 @@ def post():
 					"from": message['from'],
 					"message": message['text']['body'],
 					"message_id": message['id'],
-					"content_type":message_type
+					"reply_to_message_id": reply_to_message_id,
+					"is_reply": is_reply,
+					"content_type":message_type,
+					"profile_name":sender_profile_name
+				}).insert(ignore_permissions=True)
+			elif message_type == 'reaction':
+				frappe.get_doc({
+					"doctype": "WhatsApp Message",
+					"type": "Incoming",
+					"from": message['from'],
+					"message": message['reaction']['emoji'],
+					"reply_to_message_id": message['reaction']['message_id'],
+					"message_id": message['id'],
+					"content_type": "reaction",
+					"profile_name":sender_profile_name
+				}).insert(ignore_permissions=True)
+			elif message_type == 'interactive':
+				frappe.get_doc({
+					"doctype": "WhatsApp Message",
+					"type": "Incoming",
+					"from": message['from'],
+					"message": message['interactive']['nfm_reply']['response_json'],
+					"message_id": message['id'],
+					"reply_to_message_id": reply_to_message_id,
+					"is_reply": is_reply,
+					"content_type": "flow",
+					"profile_name":sender_profile_name
 				}).insert(ignore_permissions=True)
 			elif message_type in ["image", "audio", "video", "document"]:
+				settings = frappe.get_doc(
+							"WhatsApp Settings", "WhatsApp Settings",
+						)
+				token = settings.get_password("token")
+				url = f"{settings.url}/{settings.version}/"
+
+
 				media_id = message[message_type]["id"]
 				headers = {
 					'Authorization': 'Bearer ' + token
@@ -78,27 +115,59 @@ def post():
 
 					media_response = requests.get(media_url, headers=headers)
 					if media_response.status_code == 200:
+
 						file_data = media_response.content
-
-						file_path = f"{bench_location}/sites/{site_name}/public/files/"
-
 						file_name = f"{frappe.generate_hash(length=10)}.{file_extension}"
-						file_full_path = file_path + file_name
 
-						with open(file_full_path, "wb") as file:
-							file.write(file_data)
-
-						time.sleep(1)
-
-						frappe.get_doc({
+						message_doc = frappe.get_doc({
 							"doctype": "WhatsApp Message",
 							"type": "Incoming",
 							"from": message['from'],
 							"message_id": message['id'],
-							"message": f"/files/{file_name}",
-							"attach" : f"/files/{file_name}",
-							"content_type" : message_type
+							"reply_to_message_id": reply_to_message_id,
+							"is_reply": is_reply,
+							"message": message[message_type].get("caption",f"/files/{file_name}"),
+							"content_type" : message_type,
+							"profile_name":sender_profile_name
 						}).insert(ignore_permissions=True)
+
+						file = frappe.get_doc(
+							{
+								"doctype": "File",
+								"file_name": file_name,
+								"attached_to_doctype": "WhatsApp Message",
+								"attached_to_name": message_doc.name,
+								"content": file_data,
+								"attached_to_field": "attach"
+							}
+						).save(ignore_permissions=True)
+
+
+						message_doc.attach = file.file_url
+						message_doc.save()
+			elif message_type == "button":
+				frappe.get_doc({
+					"doctype": "WhatsApp Message",
+					"type": "Incoming",
+					"from": message['from'],
+					"message": message['button']['text'],
+					"message_id": message['id'],
+					"reply_to_message_id": reply_to_message_id,
+					"is_reply": is_reply,
+					"content_type": message_type,
+					"profile_name":sender_profile_name
+				}).insert(ignore_permissions=True)
+			else:
+				frappe.get_doc({
+					"doctype": "WhatsApp Message",
+					"type": "Incoming",
+					"from": message['from'],
+					"message_id": message['id'],
+					"message": message[message_type].get(message_type),
+					"content_type" : message_type,
+					"profile_name":sender_profile_name
+				}).insert(ignore_permissions=True)
+
 	else:
 		changes = None
 		try:
@@ -108,7 +177,6 @@ def post():
 		update_status(changes)
 	return
 
-
 def update_status(data):
 	"""Update status hook."""
 	if data.get("field") == "message_template_status_update":
@@ -116,7 +184,6 @@ def update_status(data):
 
 	elif data.get("field") == "messages":
 		update_message_status(data['value'])
-
 
 def update_template_status(data):
 	"""Update template status."""
@@ -126,7 +193,6 @@ def update_template_status(data):
 		WHERE id = %(message_template_id)s""",
 		data
 	)
-
 
 def update_message_status(data):
 	"""Update message status."""

@@ -1,32 +1,38 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:template_name",
+ "autoname": "format:{template_name}-{language_code}",
  "creation": "2022-10-28 13:39:09.887817",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "template_name",
+  "actual_name",
+  "column_break_bthp",
+  "status",
+  "id",
+  "section_break_fxqh",
   "template",
   "sample_values",
+  "for_doctype",
+  "field_names",
   "column_break_6",
-  "template_name",
   "category",
   "language",
   "language_code",
+  "section_break_lupb",
   "header_type",
   "header",
   "sample",
-  "footer",
-  "id",
-  "status"
+  "column_break_tbvf",
+  "footer"
  ],
  "fields": [
   {
    "fieldname": "template_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Template Name",
+   "label": "Template Label",
    "reqd": 1,
    "unique": 1
   },
@@ -85,7 +91,10 @@
    "default": "Pending",
    "fieldname": "status",
    "fieldtype": "Data",
-   "label": "Status"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "read_only": 1
   },
   {
    "fieldname": "header_type",
@@ -94,25 +103,58 @@
    "options": "\nTEXT\nDOCUMENT\nIMAGE"
   },
   {
-   "depends_on": "eval:doc.header_type && doc.header_type != 'TEXT'",
+   "depends_on": "eval:doc.header_type",
    "fieldname": "sample",
-   "fieldtype": "Data",
-   "label": "Sample",
-   "options": "URL"
+   "fieldtype": "Attach",
+   "label": "Sample"
   },
   {
    "fieldname": "sample_values",
-   "fieldtype": "Text",
+   "fieldtype": "Small Text",
    "label": "Sample Values"
+  },
+  {
+   "fieldname": "column_break_bthp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_fxqh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "actual_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "for_doctype",
+   "fieldtype": "Link",
+   "label": "For DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "section_break_lupb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_tbvf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Field names to replace the value in templates",
+   "fieldname": "field_names",
+   "fieldtype": "Small Text",
+   "label": "Field names"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-11-23 17:44:04.673291",
+ "modified": "2024-08-19 12:22:17.367586",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Templates",
- "naming_rule": "By fieldname",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
