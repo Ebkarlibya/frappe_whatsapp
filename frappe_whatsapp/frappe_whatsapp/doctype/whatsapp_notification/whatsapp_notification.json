@@ -74,7 +74,7 @@
   {
    "fieldname": "help_html",
    "fieldtype": "HTML",
-   "options": "<pre><code>doc.grand_total &gt; 0</code></pre>\n\n<p>Conditions should be written in simple Python. Please use properties available in the form only.</p>\n\n<p>Example: </p><pre><code>doc.status=='Enabled' </code></pre><p></p>\n\n<p> For scheduler events you can use follwing methods</p>\n<p>Allowed functions: </p><ul>\n<li>frappe.db.get_value</li>\n<li>frappe.db.get_list</li>\n<li>frappe.session</li>\n<li>frappe.utils.now_datetime</li>\n<li>frappe.utils.get_datetime</li>\n<li>frappe.utils.add_to_date</li>\n<li>frappe.utils.now</li>\n</ul>\n<p>Example: </p><pre><code>doc.creation &gt; frappe.utils.add_to_date(frappe.utils.now_datetime(\n), days=-5, as_string=True, as_datetime=True) </code></pre><p></p>\n\n<p>\n\t<b>\n\t\tFinally set the contact list to send messages. This should be set only in case of scheduled events.\n\t</b>\n<br>\ndoc._contact_list = [\"919123456789\"]\n</p> "
+   "options": "<pre><code>doc.grand_total &gt; 0</code></pre>\n\n<p>Conditions should be written in simple Python. Please use properties available in the form only.</p>\n\n<p>Example: </p><pre><code>doc.status=='Enabled' </code></pre><p></p>\n\n<p> For scheduler events you can use follwing methods</p>\n<p>Allowed functions: </p><ul>\n<li>frappe.db.get_value</li>\n<li>frappe.db.get_list</li>\n<li>frappe.session</li>\n<li>frappe.utils.now_datetime</li>\n<li>frappe.utils.get_datetime</li>\n<li>frappe.utils.add_to_date</li>\n<li>frappe.utils.now</li>\n</ul>\n<p>Example: </p><pre><code>doc.creation &gt; frappe.utils.add_to_date(frappe.utils.now_datetime(\n), days=-5, as_string=True, as_datetime=True) </code></pre><p></p>\n\n<p>\n\t<b>\n\t\tFinally set the contact list to send messages. This should be set only in case of scheduled events.\n\t</b>\n<br>\ncontact_list = [\"919123456789\"]\n</p> \n<p><b>Example (Scheduler Event \u2013 Conditional Contacts):</b></p>\n<pre><code>\nif frappe.db.get_value(\"User\", \"Administrator\", \"enabled\"):\n\tcontact_list = [\"+919123456789\"]\nelse:\n\tcontact_list = []\n</code></pre>\n\n<p><b>Example (Scheduler Event \u2013 Fetch Contacts from Database):</b></p>\n<pre><code>\ncontact_list = [\n\tu.mobile_no\n\tfor u in frappe.db.get_list(\n\t\t\"Employee\",\n\t\tfilters={\"status\": \"Active\"},\n\t\tfields=[\"mobile_no\"]\n\t)\n\tif u.mobile_no\n]\n</code></pre>"
   },
   {
    "fieldname": "notification_type",
@@ -180,7 +180,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-11-23 14:42:10.105113",
+ "modified": "2025-12-26 21:11:35.074072",
  "modified_by": "Administrator",
  "module": "Frappe Whatsapp",
  "name": "WhatsApp Notification",

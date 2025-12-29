@@ -23,32 +23,41 @@ class WhatsAppNotification(Document):
             if not any(field.fieldname == self.field_name for field in fields):  # noqa
                 frappe.throw(f"Field name {self.field_name} does not exists")
 
-    def send_scheduled_message(self) -> dict:
+    def send_scheduled_message(self):
         """Specific to API endpoint Server Scripts."""
-        safe_exec(
-            self.condition, get_safe_globals(), dict(doc=self)
-        )
-        language_code = frappe.db.get_value(
-            "WhatsApp Templates", self.template,
-            fieldname='language_code'
-        )
-        if language_code:
-            for contact in self._contact_list:
-                data = {
-                    "messaging_product": "whatsapp",
-                    "to": self.format_number(contact),
-                    "type": "template",
-                    "template": {
-                        "name": self.template,
-                        "language": {
-                            "code": language_code
-                        },
-                        "components": []
-                    }
-                }
+        if not self.condition:
+            return
 
-                self.notify(data)
-        # return _globals.frappe.flags
+        local_ctx = {}
+
+        try:
+            exec(self.condition, {"frappe": frappe}, local_ctx)
+        except Exception:
+            return
+
+        contact_list = local_ctx.get("contact_list")
+        if not contact_list:
+            return
+
+        language_code = frappe.db.get_value(
+            "WhatsApp Templates",
+            self.template,
+            "language_code"
+        ) or "en"
+
+        for contact in contact_list:
+            data = {
+                "messaging_product": "whatsapp",
+                "to": self.format_number(contact),
+                "type": "template",
+                "template": {
+                    "name": self.template,
+                    "language": {"code": language_code},
+                    "components": []
+                }
+            }
+            self.notify(data, None)
+
 
     def send_template_message(self, doc: Document):
         """Specific to Document Event triggered Server Scripts."""
@@ -220,7 +229,7 @@ class WhatsAppNotification(Document):
                 }
             )
 
-            job.insert()
+            job.insert(ignore_permissions=True)
 
     def format_number(self, number):
         """Format number."""
