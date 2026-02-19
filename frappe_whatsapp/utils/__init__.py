@@ -1,4 +1,5 @@
 """Run on each event."""
+
 import frappe
 
 from frappe.core.doctype.server_script.server_script_utils import EVENT_MAP
@@ -14,16 +15,15 @@ def run_server_script_for_doc_event(doc, event):
 
     if frappe.flags.in_migrate:
         return
-    notification = get_notifications_map().get(
-        doc.doctype, {}
-    ).get(EVENT_MAP[event], None)
+    notification = (
+        get_notifications_map().get(doc.doctype, {}).get(EVENT_MAP[event], None)
+    )
 
     if notification:
         # run all scripts for this doctype + event
         for notification_name in notification:
             frappe.get_doc(
-                "WhatsApp Notification",
-                notification_name
+                "WhatsApp Notification", notification_name
             ).send_template_message(doc)
 
 
@@ -40,9 +40,7 @@ def get_notifications_map():
     )
     for notification in enabled_whatsapp_notifications:
         if notification.notification_type == "DocType Event":
-            notification_map.setdefault(
-                notification.reference_doctype, {}
-            ).setdefault(
+            notification_map.setdefault(notification.reference_doctype, {}).setdefault(
                 notification.doctype_event, []
             ).append(notification.name)
 
@@ -53,6 +51,7 @@ def get_notifications_map():
 
 def trigger_whatsapp_notifications_all():
     """Run all."""
+    frappe.log_error("Whatsapp trigger All")
     trigger_whatsapp_notifications("All")
 
 
@@ -101,10 +100,17 @@ def trigger_whatsapp_notifications_monthly_long():
     trigger_whatsapp_notifications("Monthly Long")
 
 
+# @frappe.whitelist(allow_guest=False)
 def trigger_whatsapp_notifications(event):
     """Run cron."""
-    frappe.get_doc(
+    # try:
+    notifications = frappe.get_doc(
         "WhatsApp Notification",
-        frappe.db.get_value("WhatsApp Notification", filters={"event_frequency": event})
+        frappe.db.get_value(
+            "WhatsApp Notification", filters={"event_frequency": event}
+        ),
     ).send_scheduled_message()
-    pass
+    return notifications
+
+    # except Exception as e:
+    #     return e
