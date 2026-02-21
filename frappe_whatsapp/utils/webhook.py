@@ -6,6 +6,8 @@ import time
 from werkzeug.wrappers import Response
 import frappe.utils
 
+from frappe_whatsapp.utils import get_whatsapp_account
+
 
 @frappe.whitelist(allow_guest=True)
 def webhook():
@@ -18,9 +20,14 @@ def webhook():
 def get():
 	"""Get."""
 	hub_challenge = frappe.form_dict.get("hub.challenge")
-	webhook_verify_token = frappe.db.get_single_value(
-		"WhatsApp Settings", "webhook_verify_token"
+	verify_token = frappe.form_dict.get("hub.verify_token")
+	webhook_verify_token = frappe.db.get_value(
+		'WhatsApp Account',
+		{"webhook_verify_token": verify_token},
+		'webhook_verify_token'
 	)
+	if not webhook_verify_token:
+		frappe.throw("No matching WhatsApp account")
 
 	if frappe.form_dict.get("hub.verify_token") != webhook_verify_token:
 		frappe.throw("Verify token does not match")
@@ -37,8 +44,10 @@ def post():
 	}).insert(ignore_permissions=True)
 
 	messages = []
+	phone_id = None
 	try:
 		messages = data["entry"][0]["changes"][0]["value"].get("messages", [])
+		phone_id = data.get("entry", [{}])[0].get("changes", [{}])[0].get("value", {}).get("metadata", {}).get("phone_number_id")
 	except KeyError:
 		messages = data["entry"]["changes"][0]["value"].get("messages", [])
 	sender_profile_name = next(
@@ -51,6 +60,9 @@ def post():
 		None,
 	)
 
+	whatsapp_account = get_whatsapp_account(phone_id) if phone_id else None
+	if not whatsapp_account:
+		return
 
 	if messages:
 		for message in messages:
@@ -67,7 +79,8 @@ def post():
 					"reply_to_message_id": reply_to_message_id,
 					"is_reply": is_reply,
 					"content_type":message_type,
-					"profile_name":sender_profile_name
+					"profile_name":sender_profile_name,
+					"whatsapp_account":whatsapp_account.name
 				}).insert(ignore_permissions=True)
 			elif message_type == 'reaction':
 				frappe.get_doc({
@@ -78,27 +91,86 @@ def post():
 					"reply_to_message_id": message['reaction']['message_id'],
 					"message_id": message['id'],
 					"content_type": "reaction",
-					"profile_name":sender_profile_name
+					"profile_name":sender_profile_name,
+					"whatsapp_account":whatsapp_account.name
 				}).insert(ignore_permissions=True)
 			elif message_type == 'interactive':
-				frappe.get_doc({
-					"doctype": "WhatsApp Message",
-					"type": "Incoming",
-					"from": message['from'],
-					"message": message['interactive']['nfm_reply']['response_json'],
-					"message_id": message['id'],
-					"reply_to_message_id": reply_to_message_id,
-					"is_reply": is_reply,
-					"content_type": "flow",
-					"profile_name":sender_profile_name
-				}).insert(ignore_permissions=True)
-			elif message_type in ["image", "audio", "video", "document"]:
-				settings = frappe.get_doc(
-							"WhatsApp Settings", "WhatsApp Settings",
-						)
-				token = settings.get_password("token")
-				url = f"{settings.url}/{settings.version}/"
+				interactive_data = message['interactive']
+				interactive_type = interactive_data.get('type')
 
+				# Handle button reply
+				if interactive_type == 'button_reply':
+					frappe.get_doc({
+						"doctype": "WhatsApp Message",
+						"type": "Incoming",
+						"from": message['from'],
+						"message": interactive_data['button_reply']['id'],
+						"message_id": message['id'],
+						"reply_to_message_id": reply_to_message_id,
+						"is_reply": is_reply,
+						"content_type": "button",
+						"profile_name": sender_profile_name,
+						"whatsapp_account": whatsapp_account.name
+					}).insert(ignore_permissions=True)
+				# Handle list reply
+				elif interactive_type == 'list_reply':
+					frappe.get_doc({
+						"doctype": "WhatsApp Message",
+						"type": "Incoming",
+						"from": message['from'],
+						"message": interactive_data['list_reply']['id'],
+						"message_id": message['id'],
+						"reply_to_message_id": reply_to_message_id,
+						"is_reply": is_reply,
+						"content_type": "button",
+						"profile_name": sender_profile_name,
+						"whatsapp_account": whatsapp_account.name
+					}).insert(ignore_permissions=True)
+				# Handle WhatsApp Flows (nfm_reply)
+				elif interactive_type == 'nfm_reply':
+					nfm_reply = interactive_data['nfm_reply']
+					response_json_str = nfm_reply.get('response_json', '{}')
+
+					# Parse the response JSON
+					try:
+						flow_response = json.loads(response_json_str)
+					except json.JSONDecodeError:
+						flow_response = {}
+
+					# Create a summary message from the flow response
+					summary_parts = []
+					for key, value in flow_response.items():
+						if value:
+							summary_parts.append(f"{key}: {value}")
+					summary_message = ", ".join(summary_parts) if summary_parts else "Flow completed"
+
+					msg_doc = frappe.get_doc({
+						"doctype": "WhatsApp Message",
+						"type": "Incoming",
+						"from": message['from'],
+						"message": summary_message,
+						"message_id": message['id'],
+						"reply_to_message_id": reply_to_message_id,
+						"is_reply": is_reply,
+						"content_type": "flow",
+						"flow_response": json.dumps(flow_response),
+						"profile_name": sender_profile_name,
+						"whatsapp_account": whatsapp_account.name
+					}).insert(ignore_permissions=True)
+
+					# Publish realtime event for flow response
+					frappe.publish_realtime(
+						"whatsapp_flow_response",
+						{
+							"phone": message['from'],
+							"message_id": message['id'],
+							"flow_response": flow_response,
+							"whatsapp_account": whatsapp_account.name
+						}
+					)
+			elif message_type in ["image", "audio", "video", "document"]:
+				token = whatsapp_account.get_password("token")
+				url = f"{whatsapp_account.url}/{whatsapp_account.version}/"
 
 				media_id = message[message_type]["id"]
 				headers = {
@@ -126,9 +198,10 @@ def post():
 							"message_id": message['id'],
 							"reply_to_message_id": reply_to_message_id,
 							"is_reply": is_reply,
-							"message": message[message_type].get("caption",f"/files/{file_name}"),
+							"message": message[message_type].get("caption", ""),
 							"content_type" : message_type,
-							"profile_name":sender_profile_name
+							"profile_name":sender_profile_name,
+							"whatsapp_account":whatsapp_account.name
 						}).insert(ignore_permissions=True)
 
 						file = frappe.get_doc(
@@ -155,7 +228,8 @@ def post():
 					"reply_to_message_id": reply_to_message_id,
 					"is_reply": is_reply,
 					"content_type": message_type,
-					"profile_name":sender_profile_name
+					"profile_name":sender_profile_name,
+					"whatsapp_account":whatsapp_account.name
 				}).insert(ignore_permissions=True)
 			else:
 				frappe.get_doc({
@@ -165,7 +239,8 @@ def post():
 					"message_id": message['id'],
 					"message": message[message_type].get(message_type),
 					"content_type" : message_type,
-					"profile_name":sender_profile_name
+					"profile_name":sender_profile_name,
+					"whatsapp_account":whatsapp_account.name
 				}).insert(ignore_permissions=True)
 
 	else:
